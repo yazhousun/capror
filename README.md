@@ -1,5 +1,5 @@
 # capror
-Capror, A Capture Probe Optimization Tool
+## Capror, A Capture Probe Optimization Tool
 ===
 Camille Menendez  
 Yazhou Sun  
