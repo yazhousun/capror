@@ -1,0 +1,175 @@
+Overview of Programs
+
+1. Run NCBIgenomeBatchDownloadFasta
+Note: To run NCBIgenomeBatchDownloadFasta, input the following parameters when running:
+  accessionListFile: file path to a file containing NCBI accession numbers to be downloaded as FASTA formatted files. First column
+  contains representative genomes and second column contains neighbor genomes.
+  outputDirectory  : file path to a folder that will contain the to-be downloaded FASTA files
+  batchSize        : [Optional] To indicate how many records to download in one batch. This must be an integer between 1 and 900.
+Description: NCBIgenomeBatchDownloadFasta downloads FASTA genome data for a list of given genomes from the NCBI Nucleotide database
+using the Entrez E-utility, EFetch. Genomes of a specified batch size will be collected/updated during one EFetch call. All genome
+data are output to individual files that can be used for future analysis. The results files will have the syntax, 
+accessionNumberWithVersion.TimeinMilliseconds.fasta, and it will be saved in the designated folder (Representatives or 
+Neighbors) in the specified outputDirectory. 
+Detailed process:
+  1. Processes input parameters.
+  2. Re-downloads the most recently downloaded file in both the Representatives and Neighbors folders in case of error during
+  previous download.
+  3. Updates Representatives folder.
+    3a. Creates HashSet of Representative files in accessionListFile.
+    3b. Creates HashSet of Representative files currently in Representatives directory.
+    3c. Creates URL and sends eFetch calls with files that must be updated. 
+    3d. Saves files in proper directory. 
+    ** steps 3c and 3d may iterate multiple times depending on the batchSize and number of files that must be updated.
+    3e. Outputs number of Representative genomes updated. 
+  4. Updates Neighbors folder.
+    4a. Creates HashSet of Neighbors files in accessionListFile.
+    4b. Creates HashSet of Neighbors files currently in Neighbors directory.
+    4c. Creates URL and sends eFetch calls with files that must be updated. 
+    4d. Saves files in proper directory. 
+    ** steps 4c and 4d may iterate multiple times depending on the batchSize and number of files that must be updated.
+    4e. Outputs number of Neighbors genomes updated.
+  5. Completes genome download.
+
+2. Run MostRecentGenomeVersion
+Note: To run MostRecentGenomeVersion, input the following parameters when running:
+  genomeListDirectory  : file path to a directory containing all genomes to study in individual files (Exampe: Representatives
+  or Neighbors directory)
+  outputDirectory      : file path to a folder that will contain the file listing most recent versions.
+  outputFileNamePrefix : custom prefix for the output file
+Description: MostRecentGenomeVersion scans the genomeListDirectory to find the most current version for each accession number. This
+program was created as an effort to combat issues that might arise during the running of CaprorKmerCounter if there are outdate 
+versions of the same genome present in the directory. The output file will be saved in the specified outputDirectory with the syntax
+outputFileNamePrefix.TimeinMilliseconds.currentVersions.txt. The file contains three tab delimited files with column 1 listing the 
+accession number, column 2 listing the most recent version number, and column 3 listing the corresponding filename.
+Detailed process:
+  1. Processes input parameters. 
+  2. Create two HashMaps. One maps the accession number to the corresponding version number, and one that maps the accession number to
+  the filename of the most recent version.
+  3. Scan all files in the genomeListDirectory and populate HashMaps.
+  4. Print HashMap as three column list to output file. 
+
+3. Run CaprorKmerCounter
+Note: To run CaprorKmerCounter, input the following parameters when running:
+  genomeListDirectory    : file path to a directory containing all genomes to study in individual files (Example: Representatives
+  or Neighbors directory)
+  mostRecentVersionsFile : file path to a file that contains a list of the most recent versions of each genome.
+  outputDirectory        : file path to a folder that will contain the kmer results files
+  kmerLength             : must be an integer between 1 and 15
+  outputFileNamePrefix   : custom prefix for the output file
+Description: CaprorKmerCounter scans the data obtained from running NCBIgenomeBatchDownloadFasta in kmers of the designated length. 
+The most recent versions of each genome are scanned by accessing the mostRecentVersionsFile. A results file is generated which
+contains an integer representing the number of genomes in the given file that contain a specific kmer (in both the forward and 
+reverse strands). Kmers are assigned a unique index (not present in output) and the results are presented in ascending order by the
+unique index value. The results file has the syntax outputfilenamePrefix.yyyymmdd.allKmers.kmerLengthbps.kcl. The kcl extension has 
+been created to represent "kmer count list". File conflicts have been resolved by appending an integer to the end of the filename 
+before the extension.
+Detailed process:
+  1. Processes input parameters.
+  2. Scans all files to keep track of kmer occurence.
+    2a. Scans one genome on one strand.
+    2b. Scans same genome on reverse strand.
+  3. Output file of kmer occurence count. 
+
+4. Run CaprorKmerResultsAnalyzer
+Note: To run CaprorKmerResultsAnalyzer, input the following parameters when running:
+  kmerListFile     : file path to a file containing all kmers to study.
+  outputDirectory  : file path to a folder that will contain the kmer results files.
+  kmerLength       : must be an integer between 1 and 15. Must match the kmerListFile kmer value.
+Description: CaprorKmerResultsAnalyzer scans the table obtained from running CaprorKmerCounter for a designated kmer length
+and records the frequency at which kmers are present in genomes. A file is created with the syntax,
+filenamePrefix.yyyymmdd.allKmers.kmerLengthbps.summary.txt where filenamePrefix.yyyymmdd is the name of the 
+CaprorKmerCounter file from which the genome data has been collected. The file lists the number of kmers that appear in 
+greater than 4,000 genomes, greater than 3,000 genomes, greater than 2,000 genomes, greater than 1,000 genomes, less than 10 genomes, 
+less than 5 genomes, less than 3 genomes, and less than 2 genomes. The file will be saved in the designated output directory and 
+file conflicts have been resolved by appending an integer to the end of the filename before the extension. Another group of 8 
+tab-delimited files are created which contain the unique index of the kmer in the first column and the number of genomes they're 
+present in is in the second column. They have the syntax filenamePrefix.yyyymmdd.allKmers.kmerLengthbps.filespecific.txt where
+filespecific can be replaced by one of the following:
+  - G4k : Greater than 4,000 genomes
+  - G3k : Greater than 3,000 genomes
+  - G2k : Greater than 2,000 genomes
+  - G1k : Greater than 1,000 genomes
+  - L2  : Less than 2 genomes
+  - L3  : Less than 3 genomes
+  - L5  : Less than 5 genomes
+  - L10 : Less than 10 genomes
+Detailed process:
+  1. Processes input parameters.
+  2. Scan kmerListFile and keep track of how many kmers are present in the specified ranges of occurences.
+  3. Output summary file 
+
+5. Unique Region Identifier Procedure (eventually will be combined into one full program with multiple classes)
+  a. CaprorUniqueSequenceFinder
+  Note: *** INPUT PARAMETERS
+  Note: **NEED TO REVIEW** Scans a single genome and isolates the kmers that are present in the genome AND present in less than a
+  certain number of total genomes that have been reviewed.
+  b. CaprorUniqueRegionFinder
+  Note: *** INPUT PARAMETERS
+  Note: **NEED TO REVIEW** Scans a single genome and identifies start & end positions for unique regions containing the kmers selected
+  in CaprorUniqueSequenceFinder
+  c. CaprorUniqueRegionMerger
+  Note: *** INPUT PARAMETERS
+  Note: **NEED TO REVIEW** Scans start and end positions from CaprorUniqueRegionFinder and merges overlapping regions and regions 
+  within a certain distance of each other.
+
+Optional:
+
+-ExtractGenomeByName
+Note: To run ExtractGenomeByName, input the following parameters when running:
+  genomeListFile   : file path to a file containing the genome sequences.
+  groupSeqList     : file path to a file containing the names of the sequences to be studied.
+  outputDirectory  : file path to a folder that will contain the kmer results files.
+Note: ExtractGenomeByName outputs the genome data obtained from running NCBIgenomeBatchDownloadFasta for a specific list of given 
+names (the first line of FASTA sequence format) to a separate file. The output file has the syntax, 
+groupSeqListName.filenamePrefix.NCBIBD.yyyymmdd.fasta where groupSeqListName is the name of the groupSeqList file without the 
+extension and filenamePrefix.NCBIBD.yyyymmdd is the name of the NCBIgenomeBatchDownloadFasta file from which the genome data has been 
+collected. It will be saved in the designated outputDirectory. File conflicts have been resolved by appending an integer to the end of
+the filename before the extension. 
+
+-CheckGenomeLengths
+Note: To run CheckGenomeLengths, input the following parameters when running:
+  genomeListFile   : file path to a file containing the genome sequences.
+  outputDirectory  : file path to a folder that will contain the results file.
+Note: CheckGenomeLengths scans a file that contains multiple genome sequences and outputs a file which contains the sequence name in 
+column 1 and the length of the genome in column 2. The output file has the syntax, 
+filenamePrefix.NCBIBD.yyyymmdd.seqNameAndLength.txt where filenamePrefix.NCBIBD.yyyymmdd is the name of the 
+NCBIgenomeBatchDownloadFasta file from which the genome data has been collected. Alternatively, the file could also have 
+the syntax groupSeqListName.filenamePrefix.NCBIBD.yyyymmdd.seqNameAndLength.txt where groupSeqListName is the name 
+of the groupSeqList file without the extension used to run ExtractGenomeByName and filenamePrefix.NCBIBD.yyyymmdd is the name of the
+NCBIgenomeBatchDownloadFasta file from which the genome data has been collected. The output file will be saved in the designated 
+outputDirectory. File conflicts have been resolved by appending an integer to the end of the filename before the extension. 
+
+-KmerCounterUniqueToStrainFinder
+Note: To run KmerCounterUniqueToStrainFinder, input the following parameters when running:
+  kmerListFile     : file path to a file containing all kmers to study.
+  outputDirectory  : file path to a folder that will contain the kmer results files.
+  kmerLength       : must be an integer between 1 and 15. Must match the kmerListFile kmer value.
+Note: KmerCounterUniqueToStrainFinder scans the data obtained from running CaprorKmerCounterFromMultipleFasta for a designated kmer
+length and outputs a file which contains the kmer sequence ID in column 1 and the number of genomes the kmer is present in in column 
+2. The file is in the syntax filenamePrefix.NCBIBD.yyyymmdd.allKmers.kmerLengthbps.strainspecific.txt where 
+filenamePrefix.NCBIBD.yyyymmdd is the name of the NCBIgenomeBatchDownloadFasta file from which the genome data has been collected. The
+output file will be saved in the designated outputDirectory. File conflicts have been resolved by appending an integer to the end of
+the filename before the extension.
+
+-KmerCounterUniqueToSpeciesFinder
+Note: To run KmerCounterUniqueToSpeciesFinder, input the following parameters when running:
+  kmerListFileAll  : file path to a file containing all kmers to study.
+  kmerListFileGroup: file path to a file containing kmers in a specific group.
+  outputDirectory  : file path to a folder that will contain the kmer results files.
+  kmerLength       : must be an integer between 1 and 15. Must match the kmerListFile kmer value.
+Note: KmerCounterUniqueToSpeciesFinder scans the data obtained from running CaprorKmerCounterFromMultipleFasta for a designated kmer
+length and outputs a file which contains the kmer sequence ID in column 1 and the number of genomes the kmer is present in among the
+full group of genomes in column 2. Column 3 contains the number of genomes from the group in which the kmer is present. Kmers are only
+listed if the value for that group is at least 90% of the value for the whole genome. The file is in the syntax 
+roupSeqListName.filenamePrefix.NCBIBD.yyyymmdd.kmerLengthbps.speciesspecific.txt where groupSeqListName is the name of the
+groupSeqList file without the extension used to run ExtractGenomeByName and filenamePrefix.NCBIBD.yyyymmdd is the name of the 
+NCBIgenomeBatchDownloadFasta file from which the genome data has been collected. The output file will be saved in the designated 
+outputDirectory. File conflicts have been resolved by appending an integer to the end of the filename before the extension. 
+
+-UniqueRegionIdentifier
+*** DESCRIPTION OF OLD CODE UNTIL NEW CODE IS FULLY FUNCTIONING:
+UniqueRegion currently looks at one genome sequence and reports the nucleotide beginning and end positions of "unique regions"
+within the genome. The genome is scanned for specific kmers contained in a KmerResultsAnalyzer file and the beginning and end 
+positions are reported. In cases where kmers overlap, the start and end position are from the start of the first kmer to the end of
+the last overlapping kmer. 
