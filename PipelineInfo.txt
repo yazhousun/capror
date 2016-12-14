@@ -99,77 +99,9 @@ Detailed process:
   2. Scan kmerListFile and keep track of how many kmers are present in the specified ranges of occurences.
   3. Output summary file 
 
-5. Unique Region Identifier Procedure (eventually will be combined into one full program with multiple classes)
-  a. CaprorUniqueSequenceFinder
-  Note: *** INPUT PARAMETERS
-  Note: **NEED TO REVIEW** Scans a single genome and isolates the kmers that are present in the genome AND present in less than a
-  certain number of total genomes that have been reviewed.
-  b. CaprorUniqueRegionFinder
-  Note: *** INPUT PARAMETERS
-  Note: **NEED TO REVIEW** Scans a single genome and identifies start & end positions for unique regions containing the kmers selected
-  in CaprorUniqueSequenceFinder
-  c. CaprorUniqueRegionMerger
-  Note: *** INPUT PARAMETERS
-  Note: **NEED TO REVIEW** Scans start and end positions from CaprorUniqueRegionFinder and merges overlapping regions and regions 
-  within a certain distance of each other.
+5. CaprorFullUniqueRegionFinder
+Note: Currently CaprorFullUniqueRegionFinder is designed to only report the unique regions for one genome, but it can be modified to scan all recent genomes for unique regions. The parameters that will be need to when scannning all genomes are:
 
-Optional:
+Description: 
 
--ExtractGenomeByName
-Note: To run ExtractGenomeByName, input the following parameters when running:
-  genomeListFile   : file path to a file containing the genome sequences.
-  groupSeqList     : file path to a file containing the names of the sequences to be studied.
-  outputDirectory  : file path to a folder that will contain the kmer results files.
-Note: ExtractGenomeByName outputs the genome data obtained from running NCBIgenomeBatchDownloadFasta for a specific list of given 
-names (the first line of FASTA sequence format) to a separate file. The output file has the syntax, 
-groupSeqListName.filenamePrefix.NCBIBD.yyyymmdd.fasta where groupSeqListName is the name of the groupSeqList file without the 
-extension and filenamePrefix.NCBIBD.yyyymmdd is the name of the NCBIgenomeBatchDownloadFasta file from which the genome data has been 
-collected. It will be saved in the designated outputDirectory. File conflicts have been resolved by appending an integer to the end of
-the filename before the extension. 
-
--CheckGenomeLengths
-Note: To run CheckGenomeLengths, input the following parameters when running:
-  genomeListFile   : file path to a file containing the genome sequences.
-  outputDirectory  : file path to a folder that will contain the results file.
-Note: CheckGenomeLengths scans a file that contains multiple genome sequences and outputs a file which contains the sequence name in 
-column 1 and the length of the genome in column 2. The output file has the syntax, 
-filenamePrefix.NCBIBD.yyyymmdd.seqNameAndLength.txt where filenamePrefix.NCBIBD.yyyymmdd is the name of the 
-NCBIgenomeBatchDownloadFasta file from which the genome data has been collected. Alternatively, the file could also have 
-the syntax groupSeqListName.filenamePrefix.NCBIBD.yyyymmdd.seqNameAndLength.txt where groupSeqListName is the name 
-of the groupSeqList file without the extension used to run ExtractGenomeByName and filenamePrefix.NCBIBD.yyyymmdd is the name of the
-NCBIgenomeBatchDownloadFasta file from which the genome data has been collected. The output file will be saved in the designated 
-outputDirectory. File conflicts have been resolved by appending an integer to the end of the filename before the extension. 
-
--KmerCounterUniqueToStrainFinder
-Note: To run KmerCounterUniqueToStrainFinder, input the following parameters when running:
-  kmerListFile     : file path to a file containing all kmers to study.
-  outputDirectory  : file path to a folder that will contain the kmer results files.
-  kmerLength       : must be an integer between 1 and 15. Must match the kmerListFile kmer value.
-Note: KmerCounterUniqueToStrainFinder scans the data obtained from running CaprorKmerCounterFromMultipleFasta for a designated kmer
-length and outputs a file which contains the kmer sequence ID in column 1 and the number of genomes the kmer is present in in column 
-2. The file is in the syntax filenamePrefix.NCBIBD.yyyymmdd.allKmers.kmerLengthbps.strainspecific.txt where 
-filenamePrefix.NCBIBD.yyyymmdd is the name of the NCBIgenomeBatchDownloadFasta file from which the genome data has been collected. The
-output file will be saved in the designated outputDirectory. File conflicts have been resolved by appending an integer to the end of
-the filename before the extension.
-
--KmerCounterUniqueToSpeciesFinder
-Note: To run KmerCounterUniqueToSpeciesFinder, input the following parameters when running:
-  kmerListFileAll  : file path to a file containing all kmers to study.
-  kmerListFileGroup: file path to a file containing kmers in a specific group.
-  outputDirectory  : file path to a folder that will contain the kmer results files.
-  kmerLength       : must be an integer between 1 and 15. Must match the kmerListFile kmer value.
-Note: KmerCounterUniqueToSpeciesFinder scans the data obtained from running CaprorKmerCounterFromMultipleFasta for a designated kmer
-length and outputs a file which contains the kmer sequence ID in column 1 and the number of genomes the kmer is present in among the
-full group of genomes in column 2. Column 3 contains the number of genomes from the group in which the kmer is present. Kmers are only
-listed if the value for that group is at least 90% of the value for the whole genome. The file is in the syntax 
-roupSeqListName.filenamePrefix.NCBIBD.yyyymmdd.kmerLengthbps.speciesspecific.txt where groupSeqListName is the name of the
-groupSeqList file without the extension used to run ExtractGenomeByName and filenamePrefix.NCBIBD.yyyymmdd is the name of the 
-NCBIgenomeBatchDownloadFasta file from which the genome data has been collected. The output file will be saved in the designated 
-outputDirectory. File conflicts have been resolved by appending an integer to the end of the filename before the extension. 
-
--UniqueRegionIdentifier
-*** DESCRIPTION OF OLD CODE UNTIL NEW CODE IS FULLY FUNCTIONING:
-UniqueRegion currently looks at one genome sequence and reports the nucleotide beginning and end positions of "unique regions"
-within the genome. The genome is scanned for specific kmers contained in a KmerResultsAnalyzer file and the beginning and end 
-positions are reported. In cases where kmers overlap, the start and end position are from the start of the first kmer to the end of
-the last overlapping kmer. 
+Detailed process:
